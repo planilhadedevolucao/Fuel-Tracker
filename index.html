@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="pt-BR" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; padding: 0; width: 100%; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .anim-in { animation: slideUp 0.3s ease-out forwards; }
+    .card-hover { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(3,105,161,0.12); }
+    .tab-btn { cursor: pointer; position: relative; }
+    .tab-btn.active { color: #0369a1 !important; }
+    @media (max-width: 640px) {
+      input, button, label { font-size: 16px !important; }
+    }
+    @media (max-width: 480px) {
+      .grid { gap: 0.5rem !important; }
+      .space-y-2 > * + * { margin-top: 0.5rem !important; }
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto flex flex-col" style="background:#ffffff;">
+   <!-- Header -->
+   <div style="background:linear-gradient(135deg,#0369a1 0%,#0284c7 100%);" class="px-4 md:px-6 pt-6 md:pt-8 pb-4 md:pb-6 flex-shrink-0 sticky top-0 z-40 shadow-lg">
+    <div class="max-w-4xl mx-auto flex items-center gap-3">
+     <div class="w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#ffffff;box-shadow:0 0 20px rgba(255,255,255,0.3);">
+      <i data-lucide="fuel" style="width:20px;height:20px;color:#0369a1;"></i>
+     </div>
+     <div class="flex-1 min-w-0">
+      <h1 class="text-lg md:text-xl font-bold" style="color:#ffffff;">Fuel Tracker</h1>
+      <p class="text-xs md:text-xs" style="color:#ffffff;">Controle de consumo do seu veículo</p>
+     </div>
+    </div>
+   </div><!-- Tab Navigation -->
+   <div class="px-4 md:px-6 flex-shrink-0 sticky top-16 z-30" style="background:#ffffff;border-bottom:1px solid #e0f2fe;">
+    <div class="max-w-4xl mx-auto flex gap-4 md:gap-8 overflow-x-auto">
+     <button id="tab-dashboard" class="tab-btn active py-2.5 text-xs md:text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap" style="color:#0369a1;border-bottom:2px solid #0369a1;"> <i data-lucide="bar-chart-3" style="width:16px;height:16px;"></i><span>Resumo</span> </button> <button id="tab-report" class="tab-btn py-2.5 text-xs md:text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap" style="color:#94a3b8;border-bottom:2px solid transparent;"> <i data-lucide="line-chart" style="width:16px;height:16px;"></i><span>Análise</span> </button>
+    </div>
+   </div><!-- Dashboard View -->
+   <div id="view-dashboard" class="px-4 md:px-6 pt-4 md:pt-6 pb-8 flex-1 overflow-auto">
+    <div class="max-w-4xl mx-auto">
+     <!-- Stats -->
+     <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4 md:mb-6">
+      <div class="rounded-lg md:rounded-xl p-2 md:p-3 text-center" style="background:#ffffff;border:2px solid #0369a1;box-shadow:0 4px 15px rgba(3,105,161,0.1);">
+       <p class="text-xs font-medium" style="color:#0369a1;">Registros</p>
+       <p id="stat-count" class="text-base md:text-lg font-bold" style="color:#0369a1;">0</p>
+      </div>
+      <div class="rounded-lg md:rounded-xl p-2 md:p-3 text-center" style="background:#ffffff;border:2px solid #0369a1;box-shadow:0 4px 15px rgba(3,105,161,0.1);">
+       <p class="text-xs font-medium" style="color:#0369a1;">Média Geral</p>
+       <p class="text-base md:text-lg font-bold" style="color:#0369a1;"><span id="stat-avg">--</span> <span class="text-xs font-medium">km/L</span></p>
+      </div>
+      <div class="rounded-lg md:rounded-xl p-2 md:p-3 text-center" style="background:#ffffff;border:2px solid #0369a1;box-shadow:0 4px 15px rgba(3,105,161,0.1);">
+       <p class="text-xs font-medium" style="color:#0369a1;">Total Km</p>
+       <p id="stat-km" class="text-base md:text-lg font-bold" style="color:#0369a1;">0</p>
+      </div>
+      <div class="rounded-lg md:rounded-xl p-2 md:p-3 text-center" style="background:#ffffff;border:2px solid #0369a1;box-shadow:0 4px 15px rgba(3,105,161,0.1);">
+       <p class="text-xs font-medium" style="color:#0369a1;">Total Gasto</p>
+       <p id="stat-cost" class="text-base md:text-lg font-bold" style="color:#0369a1;">R$ 0,00</p>
+      </div>
+     </div><!-- Form -->
+     <div class="rounded-xl md:rounded-2xl p-3 md:p-5 mb-4 md:mb-6" style="background:#ffffff;border:2px solid #0369a1;box-shadow:0 4px 15px rgba(3,105,161,0.1);">
+      <form id="fuel-form" class="space-y-2 md:space-y-3">
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+        <div><label for="model" class="block text-xs font-medium mb-1" style="color:#0369a1;">Modelo do Veículo</label> <input id="model" type="text" placeholder="Ex: Civic 2022" required class="w-full rounded-lg px-2 md:px-3 py-2 md:py-2.5 text-xs md:text-sm outline-none focus:ring-2" style="background:#ffffff;color:#000000;border:1px solid #0369a1;">
+        </div>
+        <div><label for="plate" class="block text-xs font-medium mb-1" style="color:#0369a1;">Placa</label> <input id="plate" type="text" placeholder="ABC-1D23" required maxlength="8" class="w-full rounded-lg px-2 md:px-3 py-2 md:py-2.5 text-xs md:text-sm outline-none focus:ring-2 uppercase" style="background:#ffffff;color:#000000;border:1px solid #0369a1;">
+        </div>
+       </div>
+       <div class="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+        <div><label for="km-init" class="block text-xs font-medium mb-1" style="color:#0369a1;">Km Inicial</label> <input id="km-init" type="number" step="1" min="0" placeholder="15200" required class="w-full rounded-lg px-2 md:px-3 py-2 md:py-2.5 text-xs md:text-sm outline-none focus:ring-2" style="background:#ffffff;color:#000000;border:1px solid #0369a1;">
+        </div>
+        <div><label for="km-final" class="block text-xs font-medium mb-1" style="color:#0369a1;">Km Final</label> <input id="km-final" type="number" step="1" min="0" placeholder="15350" required class="w-full rounded-lg px-2 md:px-3 py-2 md:py-2.5 text-xs md:text-sm outline-none focus:ring-2" style="background:#ffffff;color:#000000;border:1px solid #0369a1;">
+        </div>
+        <div><label for="liters" class="block text-xs font-medium mb-1" style="color:#0369a1;">Litros</label> <input id="liters" type="number" step="0.01" min="0.01" placeholder="40" required class="w-full rounded-lg px-2 md:px-3 py-2 md:py-2.5 text-xs md:text-sm outline-none focus:ring-2" style="background:#ffffff;color:#000000;border:1px solid #0369a1;">
+        </div>
+       </div>
+       <div class="grid grid-cols-2 gap-2 md:gap-3">
+        <div><label for="cost" class="block text-xs font-medium mb-1" style="color:#0369a1;">Valor (R$)</label> <input id="cost" type="number" step="0.01" min="0" placeholder="0,00" required class="w-full rounded-lg px-2 md:px-3 py-2 md:py-2.5 text-xs md:text-sm outline-none focus:ring-2" style="background:#ffffff;color:#000000;border:1px solid #0369a1;">
+        </div>
+        <div><label for="date-input" class="block text-xs font-medium mb-1" style="color:#0369a1;">Data</label> <input id="date-input" type="date" required class="w-full rounded-lg px-2 md:px-3 py-2 md:py-2.5 text-xs md:text-sm outline-none focus:ring-2" style="background:#ffffff;color:#000000;border:1px solid #0369a1;">
+        </div>
+       </div><button id="submit-btn" type="submit" class="w-full rounded-lg md:rounded-xl py-2 md:py-3 text-xs md:text-sm font-semibold flex items-center justify-center gap-2 transition-colors hover:shadow-lg" style="background:linear-gradient(135deg,#0369a1 0%,#0284c7 100%);color:#ffffff;box-shadow:0 4px 15px rgba(3,105,161,0.3);"> <i data-lucide="check-circle-2" style="width:16px;height:16px;"></i><span>Registrar Abastecimento</span> </button>
+       <p id="form-msg" class="text-xs text-center hidden" style="color:#ef4444;"></p>
+      </form>
+     </div><!-- Records -->
+     <div>
+      <h2 class="text-xs md:text-sm font-semibold mb-2 md:mb-3" style="color:#0369a1;">Histórico de Abastecimentos</h2>
+      <div id="records" class="space-y-1 md:space-y-2"></div>
+      <p id="empty-msg" class="text-center py-6 md:py-8 text-xs md:text-sm" style="color:#0284c7;">Nenhum registro ainda. Adicione seu primeiro abastecimento acima.</p>
+     </div>
+    </div>
+   </div><!-- Report View -->
+   <div id="view-report" class="hidden px-4 md:px-6 pt-4 md:pt-6 pb-8 flex-1 overflow-auto">
+    <div class="max-w-4xl mx-auto">
+     <div class="rounded-xl md:rounded-2xl p-3 md:p-5 mb-4 md:mb-6" style="background:#ffffff;border:2px solid #0369a1;box-shadow:0 4px 15px rgba(3,105,161,0.1);">
+      <h2 class="text-base md:text-lg font-semibold mb-3 md:mb-4" style="color:#0369a1;">Relatório de Consumo</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+       <div>
+        <p class="text-xs" style="color:#0284c7;">Melhor Consumo</p>
+        <p id="report-best" class="text-lg md:text-2xl font-bold" style="color:#0369a1;">-- km/L</p>
+       </div>
+       <div>
+        <p class="text-xs" style="color:#0284c7;">Pior Consumo</p>
+        <p id="report-worst" class="text-lg md:text-2xl font-bold" style="color:#0369a1;">-- km/L</p>
+       </div>
+       <div>
+        <p class="text-xs" style="color:#0284c7;">Custo/Km</p>
+        <p id="report-costperkm" class="text-lg md:text-2xl font-bold" style="color:#0369a1;">-- R$/km</p>
+       </div>
+       <div>
+        <p class="text-xs" style="color:#0284c7;">Preço Médio/L</p>
+        <p id="report-pricepl" class="text-lg md:text-2xl font-bold" style="color:#0369a1;">-- R$/L</p>
+       </div>
+      </div>
+     </div>
+     <div class="rounded-xl md:rounded-2xl p-3 md:p-5" style="background:#ffffff;border:2px solid #0369a1;box-shadow:0 4px 15px rgba(3,105,161,0.1);">
+      <h3 class="text-xs md:text-sm font-semibold mb-2 md:mb-4" style="color:#0369a1;">Evolução de Consumo</h3>
+      <div id="chart-container" style="width:100%;height:250px;overflow-x:auto;overflow-y:hidden;"></div>
+     </div>
+    </div>
+   </div>
+  </div><!-- Delete Confirm Overlay -->
+  <div id="delete-overlay" class="fixed inset-0 flex items-center justify-center z-50 hidden p-4" style="background:rgba(0,0,0,0.6);">
+   <div class="rounded-xl md:rounded-2xl p-4 md:p-6 max-w-sm w-full text-center" style="background:#ffffff;border:2px solid #0369a1;">
+    <i data-lucide="alert-triangle" style="width:36px;height:36px;color:#0369a1;margin:0 auto 12px;display:block;"></i>
+    <p class="font-semibold text-sm md:text-base mb-1" style="color:#0369a1;">Excluir registro?</p>
+    <p class="text-xs md:text-sm mb-4 md:mb-5" style="color:#0284c7;">Esta ação não pode ser desfeita.</p>
+    <div class="flex gap-3"><button id="cancel-del" class="flex-1 rounded-lg md:rounded-xl py-2 md:py-2.5 text-xs md:text-sm font-medium" style="background:#ffffff;color:#0369a1;border:1px solid #0369a1;">Cancelar</button> <button id="confirm-del" class="flex-1 rounded-lg md:rounded-xl py-2 md:py-2.5 text-xs md:text-sm font-medium" style="background:#ef4444;color:#fff;">Excluir</button>
+    </div>
+   </div>
+  </div>
+  <script>
+    let allRecords = [];
+    let deleteTarget = null;
+
+    function loadRecords() {
+      try {
+        const stored = localStorage.getItem('fuel-tracker-records');
+        allRecords = stored ? JSON.parse(stored) : [];
+      } catch {
+        allRecords = [];
+      }
+    }
+
+    function saveRecords() {
+      localStorage.setItem('fuel-tracker-records', JSON.stringify(allRecords));
+      renderStats();
+      renderRecords();
+    }
+
+    function initApp() {
+      loadRecords();
+      renderStats();
+      renderRecords();
+      lucide.createIcons();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+
+    // Tab Navigation
+    document.getElementById('tab-dashboard')?.addEventListener('click', () => {
+      document.getElementById('view-dashboard').classList.remove('hidden');
+      document.getElementById('view-report').classList.add('hidden');
+      document.getElementById('tab-dashboard').style.color = '#0369a1';
+      document.getElementById('tab-dashboard').style.borderBottomColor = '#0369a1';
+      document.getElementById('tab-report').style.color = '#94a3b8';
+      document.getElementById('tab-report').style.borderBottomColor = 'transparent';
+      lucide.createIcons();
+    });
+
+    document.getElementById('tab-report')?.addEventListener('click', () => {
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-report').classList.remove('hidden');
+      document.getElementById('tab-report').style.color = '#0369a1';
+      document.getElementById('tab-report').style.borderBottomColor = '#0369a1';
+      document.getElementById('tab-dashboard').style.color = '#94a3b8';
+      document.getElementById('tab-dashboard').style.borderBottomColor = 'transparent';
+      renderReport();
+      lucide.createIcons();
+    });
+
+    // Form submission
+    document.getElementById('fuel-form')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const model = document.getElementById('model');
+      const plate = document.getElementById('plate');
+      const kmInit = document.getElementById('km-init');
+      const kmFinal = document.getElementById('km-final');
+      const liters = document.getElementById('liters');
+      const cost = document.getElementById('cost');
+      const dateInput = document.getElementById('date-input');
+      const msg = document.getElementById('form-msg');
+
+      msg.classList.add('hidden');
+      msg.textContent = '';
+
+      const kmInitVal = parseFloat(kmInit.value);
+      const kmFinalVal = parseFloat(kmFinal.value);
+      const kmDriven = kmFinalVal - kmInitVal;
+      const litersVal = parseFloat(liters.value);
+      const costVal = parseFloat(cost.value);
+
+      if (kmDriven <= 0) {
+        msg.textContent = 'Km final deve ser maior que km inicial.';
+        msg.classList.remove('hidden');
+        return;
+      }
+
+      if (litersVal <= 0) {
+        msg.textContent = 'Litros deve ser maior que zero.';
+        msg.classList.remove('hidden');
+        return;
+      }
+
+      const efficiency = Math.round((kmDriven / litersVal) * 100) / 100;
+
+      // Fix timezone issue: parse date string directly without timezone conversion
+      const dateStr = dateInput.value; // Format: YYYY-MM-DD
+      
+      const newRecord = {
+        id: Date.now().toString(),
+        vehicle_model: model.value.trim(),
+        plate: plate.value.trim().toUpperCase(),
+        km_initial: kmInitVal,
+        km_final: kmFinalVal,
+        km_driven: kmDriven,
+        liters: litersVal,
+        cost: costVal,
+        date: dateStr,
+        efficiency: efficiency
+      };
+
+      allRecords.push(newRecord);
+      saveRecords();
+
+      model.value = '';
+      plate.value = '';
+      kmInit.value = '';
+      kmFinal.value = '';
+      liters.value = '';
+      cost.value = '';
+      dateInput.value = '';
+    });
+
+    // Delete confirmation
+    document.getElementById('cancel-del')?.addEventListener('click', () => {
+      deleteTarget = null;
+      document.getElementById('delete-overlay').classList.add('hidden');
+    });
+
+    document.getElementById('confirm-del')?.addEventListener('click', () => {
+      if (!deleteTarget) return;
+      allRecords = allRecords.filter(r => r.id !== deleteTarget.id);
+      saveRecords();
+      deleteTarget = null;
+      document.getElementById('delete-overlay').classList.add('hidden');
+    });
+
+    function renderStats() {
+      const count = document.getElementById('stat-count');
+      const avg = document.getElementById('stat-avg');
+      const km = document.getElementById('stat-km');
+      const cost = document.getElementById('stat-cost');
+
+      if (count) count.textContent = allRecords.length;
+
+      const totalKm = allRecords.reduce((s, r) => s + (r.km_driven || 0), 0);
+      const totalCost = allRecords.reduce((s, r) => s + (r.cost || 0), 0);
+      const totalL = allRecords.reduce((s, r) => s + (r.liters || 0), 0);
+
+      if (km) km.textContent = totalKm.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+      if (cost) cost.textContent = 'R$ ' + totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      if (allRecords.length > 0 && totalL > 0) {
+        const avgVal = totalKm / totalL;
+        if (avg) avg.textContent = avgVal.toFixed(1);
+      } else {
+        if (avg) avg.textContent = '--';
+      }
+    }
+
+    function renderRecords() {
+      const container = document.getElementById('records');
+      const empty = document.getElementById('empty-msg');
+
+      if (!container) return;
+
+      if (allRecords.length === 0) {
+        container.innerHTML = '';
+        if (empty) empty.classList.remove('hidden');
+        return;
+      }
+
+      if (empty) empty.classList.add('hidden');
+
+      const sorted = [...allRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+      container.innerHTML = '';
+
+      sorted.forEach((rec) => {
+        const el = document.createElement('div');
+        el.className = 'rounded-lg md:rounded-xl p-3 md:p-4 card-hover relative';
+        el.style.cssText = 'background:#ffffff;border:2px solid #0369a1;';
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.style.cssText = 'padding:6px;border-radius:6px;border:none;background:transparent;color:#0284c7;cursor:pointer;transition:color 0.2s;position:absolute;top:0.75rem;right:0.75rem;';
+        deleteBtn.innerHTML = '<i data-lucide="trash-2" style="width:16px;height:16px;"></i>';
+        deleteBtn.onmouseover = () => deleteBtn.style.color = '#ef4444';
+        deleteBtn.onmouseout = () => deleteBtn.style.color = '#0284c7';
+        deleteBtn.onclick = (e) => {
+          e.preventDefault();
+          deleteTarget = rec;
+          document.getElementById('delete-overlay').classList.remove('hidden');
+        };
+
+        el.innerHTML = `
+          <div class="flex flex-col gap-3 pr-8">
+            <div class="flex justify-between items-start gap-3">
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-col md:flex-row md:items-center md:gap-2 mb-2 gap-1">
+                  <span class="font-semibold text-xs md:text-sm truncate" style="color:#0369a1;">${rec.vehicle_model}</span>
+                  <span class="text-xs px-2 py-0.5 rounded-md font-mono w-fit" style="background:#f0f8ff;color:#0369a1;border:1px solid #0369a1;">${rec.plate}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-1 md:gap-2 text-xs mb-2" style="color:#0284c7;">
+                  <div><span>Km Inicial:</span> <span>${rec.km_initial.toLocaleString('pt-BR')}</span></div>
+                  <div><span>Km Final:</span> <span>${rec.km_final.toLocaleString('pt-BR')}</span></div>
+                  <div><span>Total Rodado:</span> <span style="color:#0369a1;font-semibold;">${rec.km_driven.toLocaleString('pt-BR')} km</span></div>
+                  <div><span>Litros:</span> <span>${rec.liters.toLocaleString('pt-BR')} L</span></div>
+                </div>
+              </div>
+              <div class="text-center flex-shrink-0">
+                <p class="text-sm md:text-base font-bold" style="color:#0369a1;"><span>${rec.efficiency.toFixed(1)}</span> <span class="text-xs font-medium">km/L</span></p>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2 md:gap-4 text-xs" style="color:#0284c7;">
+              <span>${(() => {
+                const parts = rec.date.split('-');
+                const year = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1;
+                const day = parseInt(parts[2], 10);
+                return new Date(year, month, day).toLocaleDateString('pt-BR');
+              })()}</span>
+              <span>R$ ${rec.cost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+          </div>
+        `;
+        el.appendChild(deleteBtn);
+        container.appendChild(el);
+        lucide.createIcons();
+      });
+    }
+
+    function renderReport() {
+      if (allRecords.length === 0) {
+        document.getElementById('report-best').textContent = '-- km/L';
+        document.getElementById('report-worst').textContent = '-- km/L';
+        document.getElementById('report-costperkm').textContent = '-- R$/km';
+        document.getElementById('report-pricepl').textContent = '-- R$/L';
+        document.getElementById('chart-container').innerHTML = '<p style="color:#0284c7;margin:auto;display:flex;align-items:center;justify-content:center;height:100%;font-size:14px;">Nenhum dado para exibir</p>';
+        return;
+      }
+
+      const effs = allRecords.filter(r => r.efficiency).map(r => r.efficiency);
+      const best = effs.length ? Math.max(...effs) : 0;
+      const worst = effs.length ? Math.min(...effs) : 0;
+
+      const totalKm = allRecords.reduce((s, r) => s + (r.km_driven || 0), 0);
+      const totalCost = allRecords.reduce((s, r) => s + (r.cost || 0), 0);
+      const totalL = allRecords.reduce((s, r) => s + (r.liters || 0), 0);
+
+      const costperkm = totalKm > 0 ? (totalCost / totalKm) : 0;
+      const pricepl = totalL > 0 ? (totalCost / totalL) : 0;
+
+      document.getElementById('report-best').textContent = best.toFixed(1) + ' km/L';
+      document.getElementById('report-worst').textContent = worst.toFixed(1) + ' km/L';
+      document.getElementById('report-costperkm').textContent = 'R$ ' + costperkm.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('report-pricepl').textContent = 'R$ ' + pricepl.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const sorted = [...allRecords].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const maxEff = Math.max(...sorted.map(r => r.efficiency || 0), 1);
+      const minEff = Math.min(...sorted.map(r => r.efficiency || 0), 0);
+      const container = document.getElementById('chart-container');
+      container.innerHTML = '';
+
+      const containerHeight = container.clientHeight || 250;
+      const containerWidth = container.clientWidth || 300;
+      const numBars = sorted.length;
+      const barWidth = 28;
+      const spacing = 12;
+      const minSvgWidth = Math.max(numBars * (barWidth + spacing) + 100, containerWidth);
+      const svgHeight = containerHeight;
+
+      const chartSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      chartSvg.setAttribute('width', minSvgWidth);
+      chartSvg.setAttribute('height', svgHeight);
+      chartSvg.style.cssText = 'display:block;width:100%;height:100%;';
+
+      const padding = { top: 40, right: 20, bottom: 60, left: 50 };
+      const chartWidth = minSvgWidth - padding.left - padding.right;
+      const chartHeightContent = svgHeight - padding.top - padding.bottom;
+
+      // Grid
+      const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      for (let i = 0; i <= 5; i++) {
+        const y = padding.top + (chartHeightContent / 5) * i;
+        const value = maxEff - (maxEff - minEff) * (i / 5);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', padding.left);
+        line.setAttribute('y1', y);
+        line.setAttribute('x2', minSvgWidth - padding.right);
+        line.setAttribute('y2', y);
+        line.setAttribute('stroke', '#e0f2fe');
+        line.setAttribute('stroke-width', '1');
+        line.setAttribute('stroke-dasharray', '4,4');
+        gridGroup.appendChild(line);
+
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', padding.left - 10);
+        label.setAttribute('y', y + 4);
+        label.setAttribute('text-anchor', 'end');
+        label.setAttribute('font-size', '11');
+        label.setAttribute('font-weight', '500');
+        label.setAttribute('fill', '#0284c7');
+        label.textContent = value.toFixed(1);
+        gridGroup.appendChild(label);
+      }
+      chartSvg.appendChild(gridGroup);
+
+      // Axes
+      const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      yAxis.setAttribute('x1', padding.left);
+      yAxis.setAttribute('y1', padding.top);
+      yAxis.setAttribute('x2', padding.left);
+      yAxis.setAttribute('y2', svgHeight - padding.bottom);
+      yAxis.setAttribute('stroke', '#0369a1');
+      yAxis.setAttribute('stroke-width', '2.5');
+      chartSvg.appendChild(yAxis);
+
+      const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      xAxis.setAttribute('x1', padding.left);
+      xAxis.setAttribute('y1', svgHeight - padding.bottom);
+      xAxis.setAttribute('x2', minSvgWidth - padding.right);
+      xAxis.setAttribute('y2', svgHeight - padding.bottom);
+      xAxis.setAttribute('stroke', '#0369a1');
+      xAxis.setAttribute('stroke-width', '2.5');
+      chartSvg.appendChild(xAxis);
+
+      // Y label
+      const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      yLabel.setAttribute('x', 10);
+      yLabel.setAttribute('y', 20);
+      yLabel.setAttribute('font-size', '12');
+      yLabel.setAttribute('font-weight', '700');
+      yLabel.setAttribute('fill', '#0369a1');
+      yLabel.textContent = 'km/L';
+      chartSvg.appendChild(yLabel);
+
+      // Gradient
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+      gradient.setAttribute('id', 'barGradient');
+      gradient.setAttribute('x1', '0%');
+      gradient.setAttribute('y1', '0%');
+      gradient.setAttribute('x2', '0%');
+      gradient.setAttribute('y2', '100%');
+      const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+      stop1.setAttribute('offset', '0%');
+      stop1.setAttribute('stop-color', '#0369a1');
+      const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+      stop2.setAttribute('offset', '100%');
+      stop2.setAttribute('stop-color', '#0284c7');
+      gradient.appendChild(stop1);
+      gradient.appendChild(stop2);
+      defs.appendChild(gradient);
+      chartSvg.appendChild(defs);
+
+      // Bars
+      const dataGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      sorted.forEach((rec, idx) => {
+        const x = padding.left + idx * (barWidth + spacing) + barWidth / 2;
+        const normalizedEff = (rec.efficiency - minEff) / (maxEff - minEff || 1);
+        const barHeight = normalizedEff * chartHeightContent;
+        const y = svgHeight - padding.bottom - barHeight;
+
+        const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        bar.setAttribute('x', x - barWidth / 2);
+        bar.setAttribute('y', y);
+        bar.setAttribute('width', barWidth);
+        bar.setAttribute('height', barHeight);
+        bar.setAttribute('fill', 'url(#barGradient)');
+        bar.setAttribute('rx', '2');
+        dataGroup.appendChild(bar);
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x);
+        circle.setAttribute('cy', y);
+        circle.setAttribute('r', '3');
+        circle.setAttribute('fill', '#0369a1');
+        circle.setAttribute('stroke', '#ffffff');
+        circle.setAttribute('stroke-width', '1.5');
+        dataGroup.appendChild(circle);
+
+        if (sorted.length <= 10 || idx % Math.ceil(sorted.length / 10) === 0) {
+          const dateLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          dateLabel.setAttribute('x', x);
+          dateLabel.setAttribute('y', svgHeight - padding.bottom + 18);
+          dateLabel.setAttribute('text-anchor', 'middle');
+          dateLabel.setAttribute('font-size', '10');
+          dateLabel.setAttribute('fill', '#0284c7');
+          // Parse date string directly (format: YYYY-MM-DD) to avoid timezone conversion
+          const parts = rec.date.split('-');
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const day = parseInt(parts[2], 10);
+          dateLabel.textContent = new Date(year, month, day).toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' });
+          dataGroup.appendChild(dateLabel);
+        }
+      });
+
+      chartSvg.appendChild(dataGroup);
+      container.appendChild(chartSvg);
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e5333fad1d4f633',t:'MTc3NTAwMDQ2Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
